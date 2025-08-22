@@ -1,0 +1,31 @@
+<?php
+// post_comment.php
+require_once 'db.php';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php'); exit;
+}
+ 
+$article_id = isset($_POST['article_id']) ? intval($_POST['article_id']) : 0;
+$name = isset($_POST['name']) ? trim($_POST['name']) : '';
+$comment = isset($_POST['comment']) ? trim($_POST['comment']) : '';
+ 
+if ($article_id <= 0 || $name === '' || $comment === '') {
+    header('Location: index.php'); exit;
+}
+ 
+// Insert safely
+$stmt = $mysqli->prepare("INSERT INTO comments (article_id, name, comment) VALUES (?,?,?)");
+$stmt->bind_param('iss', $article_id, $name, $comment);
+$stmt->execute();
+ 
+// redirect back to article
+// fetch slug to redirect nicely
+$r = $mysqli->prepare("SELECT slug FROM articles WHERE id = ?");
+$r->bind_param('i',$article_id);
+$r->execute();
+$res = $r->get_result()->fetch_assoc();
+$slug = $res ? $res['slug'] : '';
+ 
+header('Location: article.php?slug=' . urlencode($slug) . '#comments');
+exit;
+ 
